@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import * as React from "react";
+import type { LucideIcon } from "lucide-react";
 import MetroHero from "@/components/ui/scroll-locked-video-hero";
 
 const categories = [
@@ -38,6 +39,13 @@ const events = [
   { date: "02 NOV", title: "Live at the Atrium", type: "EXPERIENCE" },
 ];
 
+const features: { icon: LucideIcon; label: string; text: string }[] = [
+  { icon: ShoppingBag, label: "SHOP", text: "Curated stores" },
+  { icon: Utensils, label: "DINE", text: "Restaurants & cafés" },
+  { icon: Sparkles, label: "EXPERIENCE", text: "Things to do" },
+  { icon: CalendarDays, label: "EVENTS", text: "What's on" },
+];
+
 export default function Home() {
   const [menuOpen, setMenuOpen] = React.useState(false);
 
@@ -55,9 +63,11 @@ export default function Home() {
             <a href="#visit" className="hover:opacity-50">Visit</a>
           </nav>
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
             className="rounded-full border border-black/15 p-2 md:hidden"
-            aria-label="Open menu"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
           >
             {menuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
@@ -76,9 +86,7 @@ export default function Home() {
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1fr_1.3fr] lg:items-end">
           <div>
             <p className="mb-5 text-[10px] font-bold uppercase tracking-[0.35em] text-black/45">THE YUSRA EXPERIENCE</p>
-            <h2 className="max-w-2xl text-5xl font-black leading-[0.9] tracking-[-0.06em] sm:text-7xl">
-              MORE THAN A MALL.
-            </h2>
+            <h2 className="max-w-2xl text-5xl font-black leading-[0.9] tracking-[-0.06em] sm:text-7xl">MORE THAN A MALL.</h2>
           </div>
           <p className="max-w-xl text-lg leading-8 text-black/60">
             A place to wander, meet, discover and stay a little longer. Yusra Mall brings fashion, food, culture and everyday moments together under one roof.
@@ -117,16 +125,11 @@ export default function Home() {
             <h2 className="text-5xl font-black leading-[0.9] tracking-[-0.06em] sm:text-7xl">YOUR DAY,<br />YOUR WAY.</h2>
           </div>
           <div className="grid grid-cols-2 gap-px bg-white/15">
-            {[
-              [ShoppingBag, "SHOP", "Curated stores"],
-              [Utensils, "DINE", "Restaurants & cafés"],
-              [Sparkles, "EXPERIENCE", "Things to do"],
-              [CalendarDays, "EVENTS", "What's on"],
-            ].map(([Icon, label, text]) => (
-              <div key={label as string} className="bg-[#111] p-6 sm:p-8">
+            {features.map(({ icon: Icon, label, text }) => (
+              <div key={label} className="bg-[#111] p-6 sm:p-8">
                 <Icon size={22} strokeWidth={1.5} />
-                <p className="mt-12 text-xs font-bold tracking-[0.25em]">{label as string}</p>
-                <p className="mt-2 text-sm text-white/45">{text as string}</p>
+                <p className="mt-12 text-xs font-bold tracking-[0.25em]">{label}</p>
+                <p className="mt-2 text-sm text-white/45">{text}</p>
               </div>
             ))}
           </div>
@@ -170,9 +173,14 @@ export default function Home() {
               </div>
             </div>
             <div className="mt-12">
-              <button className="inline-flex items-center gap-3 rounded-full bg-[#111] px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-white transition hover:scale-[1.02]">
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=Yusra+Mall"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-3 rounded-full bg-[#111] px-6 py-4 text-xs font-bold uppercase tracking-[0.2em] text-white transition hover:scale-[1.02]"
+              >
                 Get Directions <ArrowRight size={15} />
-              </button>
+              </a>
             </div>
           </div>
         </div>
