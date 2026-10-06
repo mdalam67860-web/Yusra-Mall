@@ -32,17 +32,20 @@ export function MetroHero({
   const touchYRef = React.useRef<number | null>(null);
   const [progress, setProgress] = React.useState(0);
   const [muted, setMuted] = React.useState(true);
+  const [videoReady, setVideoReady] = React.useState(false);
 
   const scrub = React.useCallback(
     (delta: number) => {
       const video = videoRef.current;
-      if (!video || !Number.isFinite(video.duration) || video.duration <= 0) {
+      const distance = Math.max(1, scrubDistance);
+
+      if (!video || !videoReady || !Number.isFinite(video.duration) || video.duration <= 0) {
         return false;
       }
 
       const next = Math.max(
         0,
-        Math.min(1, progressRef.current + delta / scrubDistance),
+        Math.min(1, progressRef.current + delta / distance),
       );
 
       progressRef.current = next;
@@ -50,7 +53,7 @@ export function MetroHero({
       setProgress(next);
       return true;
     },
-    [scrubDistance],
+    [scrubDistance, videoReady],
   );
 
   const handleWheel = (event: React.WheelEvent<HTMLElement>) => {
@@ -94,8 +97,9 @@ export function MetroHero({
     const video = videoRef.current;
     if (!video) return;
 
-    video.muted = !video.muted;
-    setMuted(video.muted);
+    const nextMuted = !video.muted;
+    video.muted = nextMuted;
+    setMuted(nextMuted);
   };
 
   return (
@@ -116,6 +120,8 @@ export function MetroHero({
         playsInline
         preload="metadata"
         aria-hidden="true"
+        onLoadedMetadata={() => setVideoReady(true)}
+        onError={() => setVideoReady(false)}
       />
 
       <div className="absolute inset-0 bg-black/35" />
