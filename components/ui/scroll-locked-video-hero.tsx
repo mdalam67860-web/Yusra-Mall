@@ -28,72 +28,72 @@ export function MetroHero({
   style,
 }: MetroHeroProps) {
   const videoRef = React.useRef<HTMLVideoElement>(null);
+  const progressRef = React.useRef(0);
+  const touchYRef = React.useRef<number | null>(null);
   const [progress, setProgress] = React.useState(0);
   const [muted, setMuted] = React.useState(true);
-  const [started, setStarted] = React.useState(false);
 
   const scrub = React.useCallback(
     (delta: number) => {
       const video = videoRef.current;
-      if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return;
+      if (!video || !Number.isFinite(video.duration) || video.duration <= 0) {
+        return false;
+      }
 
-      setStarted(true);
-      setProgress((current) => {
-        const next = Math.max(0, Math.min(1, current + delta / scrubDistance));
-        video.currentTime = next * video.duration;
-        return next;
-      });
+      const next = Math.max(
+        0,
+        Math.min(1, progressRef.current + delta / scrubDistance),
+      );
+
+      progressRef.current = next;
+      video.currentTime = next * video.duration;
+      setProgress(next);
+      return true;
     },
     [scrubDistance],
   );
 
-  React.useEffect(() => {
-    const onWheel = (event: WheelEvent) => {
-      if (!started || Math.abs(event.deltaY) > 0) {
-        event.preventDefault();
-        scrub(event.deltaY);
-      }
-    };
+  const handleWheel = (event: React.WheelEvent<HTMLElement>) => {
+    const delta = event.deltaY;
+    const atStart = progressRef.current <= 0 && delta < 0;
+    const atEnd = progressRef.current >= 1 && delta > 0;
 
-    const onTouchStart = (event: TouchEvent) => {
-      const y = event.touches[0]?.clientY ?? 0;
-      (window as Window & { __yusraTouchY?: number }).__yusraTouchY = y;
-    };
+    if (atStart || atEnd) return;
 
-    const onTouchMove = (event: TouchEvent) => {
+    if (scrub(delta)) {
       event.preventDefault();
-      const currentY = event.touches[0]?.clientY ?? 0;
-      const previousY = (window as Window & { __yusraTouchY?: number }).__yusraTouchY ?? currentY;
-      scrub(previousY - currentY);
-      (window as Window & { __yusraTouchY?: number }).__yusraTouchY = currentY;
-    };
+    }
+  };
 
-    window.addEventListener("wheel", onWheel, { passive: false });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: false });
+  const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
+    touchYRef.current = event.touches[0]?.clientY ?? null;
+  };
 
-    return () => {
-      window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-    };
-  }, [scrub, started]);
+  const handleTouchMove = (event: React.TouchEvent<HTMLElement>) => {
+    const currentY = event.touches[0]?.clientY;
+    const previousY = touchYRef.current;
 
-  React.useEffect(() => {
-    document.body.style.overflow = "hidden";
-    const timer = window.setTimeout(() => {
-      document.body.style.overflow = "";
-    }, 1200);
+    if (currentY == null || previousY == null) return;
 
-    return () => {
-      window.clearTimeout(timer);
-      document.body.style.overflow = "";
-    };
-  }, []);
+    const delta = previousY - currentY;
+    const atStart = progressRef.current <= 0 && delta < 0;
+    const atEnd = progressRef.current >= 1 && delta > 0;
+
+    if (!atStart && !atEnd && scrub(delta)) {
+      event.preventDefault();
+    }
+
+    touchYRef.current = currentY;
+  };
+
+  const handleTouchEnd = () => {
+    touchYRef.current = null;
+  };
 
   const toggleMute = () => {
     const video = videoRef.current;
     if (!video) return;
+
     video.muted = !video.muted;
     setMuted(video.muted);
   };
@@ -103,6 +103,10 @@ export function MetroHero({
       className={`relative h-[100svh] min-h-[620px] w-full overflow-hidden bg-black text-white ${className}`}
       style={style}
       aria-label="Yusra Mall hero"
+      onWheel={handleWheel}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       <video
         ref={videoRef}
@@ -120,6 +124,7 @@ export function MetroHero({
       <div className="absolute left-0 right-0 top-0 z-20 flex items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
         <div className="text-xs font-semibold tracking-[0.35em]">YUSRA MALL</div>
         <button
+          type="button"
           onClick={toggleMute}
           className="rounded-full border border-white/40 bg-black/20 p-2 backdrop-blur transition hover:bg-white hover:text-black"
           aria-label={muted ? "Unmute video" : "Mute video"}
